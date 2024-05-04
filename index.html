@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Sharing App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/css/bootstrap.min.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="mt-2 mb-2 d-flex justify-content-between">
+            <button type="button" id="copyToClipboardBtn" class="btn btn-primary">COPY</button>
+            <button type="button" id="deleteTextBtn" class="btn btn-danger">DELETE</button>
+            <button type="button" id="pasteFromClipboardBtn" class="btn btn-secondary">PASTE</button>
+        </div>
+
+        <textarea id="textarea" class="full w-100" style="height: 300px;" autofocus></textarea>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket = io();
+
+        $(document).ready(function() {
+            $('#deleteTextBtn').click(function() {
+                $('#textarea').val('').focus();
+                getText();
+            });
+
+            $('#copyToClipboardBtn').click(function() {
+                navigator.clipboard.writeText($('#textarea').val());
+            });
+
+            $('#pasteFromClipboardBtn').click(function() {
+                navigator.clipboard.readText().then(clipText => { $('#textarea').val(clipText); getText(); });
+            });
+
+            $('#textarea').on('input', function() {
+                getText();
+            });
+        });
+
+        socket.on('chat message', function(msg) {
+            let array = msg.split('\n');
+            array = array.filter((value, index, arr) => value !== "" || arr.slice(index).filter(val => val === "").length > 2);
+            $('#textarea').val(array.join('\n'));
+        });
+
+        function getText(message) {
+            socket.emit('chat message', $('#textarea').val());
+        }
+
+    </script>
+</body>
+</html>
